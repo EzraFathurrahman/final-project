@@ -1,0 +1,189 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1252"> 
+  <title>Coverage Report > ConsumerService</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.phincon.bootcamp.springquiz4ezra.service</a>
+</div>
+
+<h1>Coverage Summary for Class: ConsumerService (com.phincon.bootcamp.springquiz4ezra.service)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">ConsumerService</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (5/5)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    90.3%
+  </span>
+  <span class="absValue">
+    (28/31)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.phincon.bootcamp.springquiz4ezra.service;
+&nbsp;
+&nbsp;
+&nbsp;import com.phincon.bootcamp.springquiz4ezra.model.Order;
+&nbsp;import com.phincon.bootcamp.springquiz4ezra.model.Response;
+&nbsp;import com.phincon.bootcamp.springquiz4ezra.model.Trx;
+&nbsp;import com.phincon.bootcamp.springquiz4ezra.repository.OrderRepository;
+&nbsp;import com.phincon.bootcamp.springquiz4ezra.repository.TrxRepository;
+&nbsp;import lombok.extern.slf4j.Slf4j;
+&nbsp;import org.springframework.beans.factory.annotation.Autowired;
+&nbsp;import org.springframework.jms.annotation.JmsListener;
+&nbsp;import org.springframework.jms.core.JmsTemplate;
+&nbsp;import org.springframework.messaging.Message;
+&nbsp;import org.springframework.stereotype.Service;
+&nbsp;import reactor.core.publisher.Mono;
+&nbsp;
+&nbsp;import java.util.ArrayList;
+&nbsp;import java.util.List;
+&nbsp;import java.util.Objects;
+&nbsp;import java.util.UUID;
+&nbsp;
+&nbsp;@Service
+<b class="fc">&nbsp;@Slf4j</b>
+<b class="fc">&nbsp;public class ConsumerService {</b>
+&nbsp;
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    OrderRepository orderRepository;
+&nbsp;    @Autowired
+&nbsp;    TrxRepository trxRepository;
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    JmsTemplate jmsTemplate ;
+<b class="fc">&nbsp;    Response response = new Response();</b>
+&nbsp;
+&nbsp;    @JmsListener(destination = &quot;queue.crm.register&quot;)
+&nbsp;    public void saveUser(Message&lt;Order&gt; object){
+&nbsp;        try {
+<b class="fc">&nbsp;            Order order=new Order();</b>
+<b class="fc">&nbsp;            order.setId(object.getPayload().getId());</b>
+<b class="fc">&nbsp;            order.setProduct(object.getPayload().getProduct());</b>
+<b class="fc">&nbsp;            order.setPrice(object.getPayload().getPrice());</b>
+<b class="fc">&nbsp;            order.setStatus(&quot;success&quot;);</b>
+<b class="fc">&nbsp;            order.setTrxid(object.getPayload().getTrxid());</b>
+&nbsp;
+<b class="fc">&nbsp;            Trx trxOrder = new Trx();</b>
+<b class="fc">&nbsp;            trxOrder.setId(object.getPayload().getTrxid());</b>
+<b class="fc">&nbsp;            trxOrder.setAction(object.getPayload().getAction());</b>
+<b class="fc">&nbsp;            trxOrder.setStep(&quot;queue.crm.register&quot;);</b>
+&nbsp;
+&nbsp;
+<b class="fc">&nbsp;            log.info(&quot;message sent to transaction : {}&quot;, trxOrder.getId());</b>
+&nbsp;
+<b class="fc">&nbsp;            orderRepository.save(order).doOnSuccess(savedOrder -&gt; {</b>
+&nbsp;
+<b class="fc">&nbsp;                        response.setResponse(&quot;success&quot;);</b>
+<b class="fc">&nbsp;                        jmsTemplate.convertAndSend(&quot;queue.response.orches&quot;,response);</b>
+<b class="fc">&nbsp;                        log.info(&quot;response is : {}&quot;, response.getResponse());</b>
+<b class="fc">&nbsp;                        trxOrder.setStatus(&quot;success&quot;);</b>
+<b class="fc">&nbsp;                        trxRepository.savenew(trxOrder.getId(),trxOrder.getAction(),trxOrder.getStep(),trxOrder.getStatus()).subscribe();</b>
+&nbsp;
+&nbsp;                        }
+&nbsp;                    )
+<b class="fc">&nbsp;                    .doOnError(error -&gt; {</b>
+<b class="fc">&nbsp;                        response.setResponse(&quot;failed&quot;);</b>
+<b class="fc">&nbsp;                        jmsTemplate.convertAndSend(&quot;queue.response&quot;,response);</b>
+<b class="fc">&nbsp;                        trxOrder.setStatus(&quot;failed&quot;);</b>
+<b class="fc">&nbsp;                        trxRepository.savenew(trxOrder.getId(),trxOrder.getAction(),trxOrder.getStep(),trxOrder.getStatus()).subscribe();</b>
+&nbsp;                    })
+<b class="fc">&nbsp;                    .subscribe();</b>
+&nbsp;
+<b class="fc">&nbsp;            log.info(&quot;order message {}&quot;,object);</b>
+&nbsp;
+<b class="nc">&nbsp;        } catch (Exception e) {</b>
+<b class="nc">&nbsp;            e.printStackTrace();</b>
+<b class="nc">&nbsp;            log.error(&quot;Error receive in activemq : {}&quot;, e.getMessage());</b>
+<b class="fc">&nbsp;        }</b>
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2024-01-18 05:46</div>
+</div>
+</body>
+</html>
