@@ -1,0 +1,139 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1252"> 
+  <title>Coverage Report > StepsConfig</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.phincon.bootcamp.springquiz4ezra.config</a>
+</div>
+
+<h1>Coverage Summary for Class: StepsConfig (com.phincon.bootcamp.springquiz4ezra.config)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">StepsConfig</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    50%
+  </span>
+  <span class="absValue">
+    (2/4)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    20%
+  </span>
+  <span class="absValue">
+    (2/10)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.phincon.bootcamp.springquiz4ezra.config;
+&nbsp;
+&nbsp;
+&nbsp;import com.phincon.bootcamp.springquiz4ezra.model.Steps;
+&nbsp;import com.phincon.bootcamp.springquiz4ezra.repository.StepConfigRepository;
+&nbsp;import lombok.extern.slf4j.Slf4j;
+&nbsp;import org.springframework.beans.factory.annotation.Autowired;
+&nbsp;import org.springframework.stereotype.Service;
+&nbsp;import reactor.core.publisher.Flux;
+&nbsp;import reactor.core.publisher.Mono;
+&nbsp;
+&nbsp;import java.util.List;
+&nbsp;
+&nbsp;@Service
+<b class="fc">&nbsp;@Slf4j</b>
+<b class="fc">&nbsp;public class StepsConfig {</b>
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    StepConfigRepository stepConfigRepository;
+&nbsp;
+&nbsp;     public List&lt;String&gt; getStep(String id){
+<b class="nc">&nbsp;         Flux&lt;Steps&gt; stepData=stepConfigRepository.findStep(id);</b>
+<b class="nc">&nbsp;         Flux&lt;String&gt; stepFlux = stepData.map(Steps::getStep);</b>
+<b class="nc">&nbsp;         List&lt;String&gt; stepList = stepFlux.collectList().block();</b>
+<b class="nc">&nbsp;         return stepList;</b>
+&nbsp;     }
+&nbsp;     public String getAction(String id){
+<b class="nc">&nbsp;        Flux&lt;Steps&gt; actionData=stepConfigRepository.findStep(id);</b>
+<b class="nc">&nbsp;        Flux&lt;String&gt; actionFlux = actionData.map(Steps::getAction);</b>
+<b class="nc">&nbsp;         List&lt;String&gt; actionList = actionFlux.collectList().block();</b>
+<b class="nc">&nbsp;        return actionList.get(0);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2024-01-18 05:54</div>
+</div>
+</body>
+</html>

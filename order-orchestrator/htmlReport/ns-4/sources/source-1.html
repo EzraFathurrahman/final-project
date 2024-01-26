@@ -1,0 +1,189 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1252"> 
+  <title>Coverage Report > OrderOrchestratorService</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.phincon.bootcamp.springquiz4ezra.service</a>
+</div>
+
+<h1>Coverage Summary for Class: OrderOrchestratorService (com.phincon.bootcamp.springquiz4ezra.service)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">OrderOrchestratorService</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    71.4%
+  </span>
+  <span class="absValue">
+    (5/7)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    63.3%
+  </span>
+  <span class="absValue">
+    (19/30)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.phincon.bootcamp.springquiz4ezra.service;
+&nbsp;
+&nbsp;
+&nbsp;import com.phincon.bootcamp.springquiz4ezra.config.StepsConfig;
+&nbsp;import com.phincon.bootcamp.springquiz4ezra.model.*;
+&nbsp;import lombok.extern.slf4j.Slf4j;
+&nbsp;import org.springframework.beans.factory.annotation.Autowired;
+&nbsp;import org.springframework.jms.annotation.JmsListener;
+&nbsp;import org.springframework.jms.core.JmsTemplate;
+&nbsp;import org.springframework.messaging.Message;
+&nbsp;import org.springframework.scheduling.annotation.Scheduled;
+&nbsp;import org.springframework.stereotype.Service;
+&nbsp;import reactor.core.publisher.Flux;
+&nbsp;
+&nbsp;
+&nbsp;import java.time.Duration;
+&nbsp;import java.util.*;
+&nbsp;
+&nbsp;@Service
+<b class="fc">&nbsp;@Slf4j</b>
+<b class="fc">&nbsp;public class OrderOrchestratorService  {</b>
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    JmsTemplate jmsTemplate;
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    StepsConfig stepsConfig;
+&nbsp;
+&nbsp;    Order order;
+<b class="fc">&nbsp;    private String responseStatus = &quot;Idle&quot;;</b>
+<b class="fc">&nbsp;    private String currentQueue=&quot;Idle&quot;;</b>
+&nbsp;
+&nbsp;// MAIN LISTENER ====================================
+&nbsp;    @JmsListener(destination = &quot;queue.order&quot;)
+&nbsp;    public void getOrder(Order order) {
+&nbsp;        try{
+&nbsp;            // inputting order
+<b class="fc">&nbsp;            this.order=order;</b>
+&nbsp;            // setting trxid dan actionnya
+<b class="fc">&nbsp;            order.setTrxid(UUID.randomUUID().toString());</b>
+<b class="fc">&nbsp;            String action=stepsConfig.getAction(order.getId());</b>
+<b class="fc">&nbsp;            this.order.setAction(action);</b>
+<b class="fc">&nbsp;            List&lt;String&gt; stepArray=stepsConfig.getStep(order.getId());</b>
+&nbsp;
+<b class="fc">&nbsp;            this.responseStatus = &quot;Init&quot;;</b>
+&nbsp;
+<b class="fc">&nbsp;            orchestSteps(stepArray);</b>
+&nbsp;
+<b class="fc">&nbsp;            this.responseStatus=&quot;Idle&quot;;</b>
+<b class="nc">&nbsp;        }catch(Exception e){</b>
+<b class="nc">&nbsp;            log.info(&quot;Failed to get order from queue.order : {}&quot;, e.getMessage());</b>
+<b class="fc">&nbsp;        }</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void orchestSteps(List&lt;String&gt; stringList) {
+<b class="fc">&nbsp;        Flux.fromIterable(stringList)</b>
+<b class="fc">&nbsp;                .delayElements(Duration.ofSeconds(1))</b>
+<b class="fc">&nbsp;                .takeWhile(queueName -&gt; !Objects.equals(responseStatus, &quot;failed&quot;))</b>
+<b class="fc">&nbsp;                .doOnNext(queueName -&gt; {</b>
+<b class="nc">&nbsp;                    this.currentQueue = queueName;</b>
+<b class="nc">&nbsp;                    log.info(&quot;order trxid :{} for {}&quot;,order.getTrxid(),queueName);</b>
+&nbsp;
+<b class="nc">&nbsp;                    jmsTemplate.convertAndSend(queueName, order);</b>
+<b class="nc">&nbsp;                    this.responseStatus = &quot;Pending&quot;;</b>
+&nbsp;
+<b class="nc">&nbsp;                    log.info(&quot;Message sent to: {}&quot;, queueName);</b>
+<b class="nc">&nbsp;                    log.info(&quot;Status current Order : {}&quot;, responseStatus);</b>
+&nbsp;                })
+<b class="fc">&nbsp;                .subscribe();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;    @JmsListener(destination = &quot;queue.response.orches&quot;)
+&nbsp;    public void getResponse(Message&lt;Response&gt; message) {
+<b class="nc">&nbsp;        this.responseStatus = message.getPayload().getResponse();</b>
+<b class="nc">&nbsp;        log.info(&quot;Status from response listener: {}&quot;, responseStatus);</b>
+<b class="nc">&nbsp;        updateResponse();</b>
+&nbsp;    }
+&nbsp;    @Scheduled(cron = &quot;* * * * * *&quot;)
+&nbsp;    public void updateResponse() {
+<b class="fc">&nbsp;        log.info(&quot;Status current Order : {} in Queue : {}&quot;, responseStatus,currentQueue);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;}
+&nbsp;
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2024-01-18 05:54</div>
+</div>
+</body>
+</html>
