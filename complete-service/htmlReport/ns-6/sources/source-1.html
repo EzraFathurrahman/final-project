@@ -1,0 +1,140 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1252"> 
+  <title>Coverage Report > PublisherTask</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.phincon.bootcamp.springquiz4ezra.scheduler</a>
+</div>
+
+<h1>Coverage Summary for Class: PublisherTask (com.phincon.bootcamp.springquiz4ezra.scheduler)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">PublisherTask</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (3/3)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    75%
+  </span>
+  <span class="absValue">
+    (6/8)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.phincon.bootcamp.springquiz4ezra.scheduler;
+&nbsp;
+&nbsp;import com.phincon.bootcamp.springquiz4ezra.model.User;
+&nbsp;import com.phincon.bootcamp.springquiz4ezra.repository.UserRepository;
+&nbsp;import com.phincon.bootcamp.springquiz4ezra.service.UserServiceImpl;
+&nbsp;import lombok.extern.slf4j.Slf4j;
+&nbsp;import org.springframework.beans.factory.annotation.Autowired;
+&nbsp;import org.springframework.jms.core.JmsTemplate;
+&nbsp;import org.springframework.scheduling.annotation.Scheduled;
+&nbsp;import org.springframework.stereotype.Component;
+&nbsp;import reactor.core.publisher.Flux;
+&nbsp;
+&nbsp;import java.util.List;
+&nbsp;
+&nbsp;@Component
+<b class="fc">&nbsp;@Slf4j</b>
+<b class="fc">&nbsp;public class PublisherTask {</b>
+&nbsp;    @Autowired
+&nbsp;    UserServiceImpl userService;
+&nbsp;    @Autowired
+&nbsp;    UserRepository repository;
+&nbsp;    @Autowired
+&nbsp;    JmsTemplate jmsTemplate;
+&nbsp;    @Scheduled(cron = &quot;5 * * * * *&quot;)
+&nbsp;    public void getDataToJms() {
+&nbsp;        try {
+<b class="fc">&nbsp;            Flux&lt;User&gt; users = repository.findAll();</b>
+<b class="fc">&nbsp;            log.info(&quot;Fetched {} users from the database&quot;, users.count().block());</b>
+<b class="fc">&nbsp;            jmsTemplate.convertAndSend(&quot;queue.user.get&quot;, users.collectList().block());</b>
+<b class="nc">&nbsp;        } catch (Exception e) {</b>
+<b class="nc">&nbsp;            log.error(&quot;Error getting data for ActiveMQ: {}&quot;, e.getMessage(), e);</b>
+<b class="fc">&nbsp;        }</b>
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2024-01-05 13:53</div>
+</div>
+</body>
+</html>
